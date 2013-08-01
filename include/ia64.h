@@ -38,7 +38,7 @@ benefit from your work.
            0<=lo,hi<=63 and lo<=hi */
 
 #define BITS(x,lo,hi) (      \
-           (uint32)(x##.q >> lo) &   \
+           (uint32)(x.q >> lo) &   \
 	   ( (1<<(hi-lo+1)) - 1 )    \
 	   )
 
@@ -72,8 +72,8 @@ typedef union {
    uint8 b[8];
 } qword;
 
-#define HI(x)  (x##.d[1])
-#define LO(x)  (x##.d[0])
+#define HI(x)  (x.d[1])
+#define LO(x)  (x.d[0])
 
 typedef struct {
    qword dat;

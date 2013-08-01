@@ -18,12 +18,12 @@ EXECDIR = execute
 OBJDIR = obj
 INCDIR = include
 CC = gcc
-CFLAGS = -O3 -m486 -fomit-frame-pointer -s -I$(INCDIR)
+CFLAGS = -O3 -fomit-frame-pointer -s -I$(INCDIR)
 
 ASMSRCS= assemble.c bundle.c asmfunc.c jumptbl.c decode.c symbols.c
  
 EXECSRCS = execute.c utils.c f_unit.c b_unit.c x_unit.c  \
-           m_unit.c i_alu.c i_cmp.c i_shft.c globals.c
+           m_unit.c i_alu.c i_cmp.c i_shft.c globals.c elf.c
 
 ASMOBJS = $(ASMSRCS:.c=.o) 
 EXECOBJS = $(EXECSRCS:.c=.o) 
@@ -40,6 +40,6 @@ $(ASMOBJS) ia64sim.c : ia64.h ia64asm.h asmfunc.h
 $(EXECOBJS): ia64.h execute.h
 
 clean:
-	rm -f $(OBJDIR)\*.o ia64sim
+	rm -f $(OBJDIR)/*.o ia64sim
 
 
