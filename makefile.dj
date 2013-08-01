@@ -1,0 +1,46 @@
+# /*--------------------------------------------------------------------
+# This source distribution is placed in the public domain by its author,
+# Jason Papadopoulos. You may use it for any purpose, free of charge,
+# without having to notify anyone. I disclaim any responsibility for any
+# errors, inconsistencies, and inaccuracies with real-world hardware
+# implementations of the IA64 instruction set. If you build a mission-
+# critical system based only on this simulator and something goes wrong,
+# it's your own damned fault.
+# 
+# Optionally, please be nice and tell me if you find this source to be
+# useful. Again optionally, if you add to the functionality present here
+# please consider making those additions public too, so that others may 
+# benefit from your work.	
+#        				   --jasonp@glue.umd.edu  12/5/99
+# --------------------------------------------------------------------*/
+ASMDIR = asm
+EXECDIR = execute
+OBJDIR = obj
+INCDIR = include
+CC = gcc
+CFLAGS = -O3 -m486 -fomit-frame-pointer -s -I$(INCDIR)
+
+ASMSRCS= assemble.c bundle.c asmfunc.c jumptbl.c decode.c symbols.c
+ 
+EXECSRCS = execute.c utils.c f_unit.c b_unit.c x_unit.c  \
+           m_unit.c i_alu.c i_cmp.c i_shft.c globals.c elf.c
+
+ASMOBJS = $(ASMSRCS:.c=.o) 
+EXECOBJS = $(EXECSRCS:.c=.o) 
+
+VPATH = $(OBJDIR);$(INCDIR);$(EXECDIR);$(ASMDIR)
+
+all: $(ASMOBJS) $(EXECOBJS) ia64sim.o
+	$(CC) $(CFLAGS) $(OBJDIR)/*.o -o ia64sim.exe
+
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $(OBJDIR)/$(@F)
+
+$(ASMOBJS) ia64sim.c : ia64.h ia64asm.h asmfunc.h
+$(EXECOBJS): ia64.h execute.h
+
+clean:
+	del $(OBJDIR)\*.o
+	del ia64sim.exe
+
+

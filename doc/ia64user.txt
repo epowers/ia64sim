@@ -1,0 +1,255 @@
+IA64SIM User Manual
+
+I. Overview
+
+This is a preliminary version of an attempt to document the IA64SIM program 
+written by Jason Papadopoulos, and updated by Chuck Crayne. Although an attempt 
+has been made to make this document accurate, neither Jason nor Chuck accept any
+responsibility for the consequences of using this information for any purpose 
+whatsoever.
+
+II. User Commands
+
+1. Assign
+
+target = value
+
+Assigns numeric value, or contents of specified register, to target register,
+or memory location. Specifying ip as target is treated as a branch 
+instruction, i.e.  it resets the current slot number to the first slot in the
+bundle, and issues an implicit stop. Valid registers are r0-r127 (but not 
+greater than current register stack), b0-b7, and p0-p63. 
+
+2. Breakpoint
+
+B address
+
+Sets an internal debug register for use with the G command. Currently, the only 
+way to clear this register is to set it to a value which is outside the range of
+program execution.
+
+3. Assemble
+
+C filename {base}
+
+Assembles the specified file; loads it into simulated memory; and sets the
+initial values as per section 13 of the IA-64 Software Conventions and Runtime
+Architecture Guide.  If the base address is not specified, the current version
+of the simulator will default to address zero.
+
+Now that Intel has open sourced its IA-64 assembler, this command is no longer 
+being enhanced.
+
+4. Execute until Breakpoint
+
+G
+
+Executes instructions until either the breakpoint address is encountered, or an
+instruction returns an error code.
+
+5. Instruction Step
+
+I
+
+Executes one instruction from current bundle and slot postion.  After each
+instruction, it displays the the next instruction to be executed, and the
+current values of "ip", "gp", "sp", "cfm", "ar.pfs","ar.lc", and "ar.ec".
+
+6. Load Binary File 
+
+L filename {base}
+
+Loads the specified binary into simulated memory, and sets the initial values as
+per section 13 of the IA-64 Software Conventions and Runtime Architecture Guide.
+In the current version, this command only supports ELF relocatable files.
+
+7. Clear Register Hazards
+
+P
+
+Issues an internal "stop" command to clear the list of potential register 
+hazards.
+
+8. Exit Program
+
+Q
+
+Frees allocated memory and exits the simulator. 
+
+9. Display Registers
+
+R {start} {#regs}
+
+If both operands are omitted, displays the the next instruction to be executed,
+and the current values of "ip", "gp", "sp", "cfm", "ar.pfs","ar.lc", and 
+"ar.ec".
+
+The starting register operand consists of a type character concatenated with a 
+register number (e.g. r32). Leading zeros are never required. Valid register 
+types and ranges are:
+
+  r - r127 general purpose registers
+  b - b7   branch registers
+  i - i95  input/local registers 
+  o - o95 output registers
+  p        predicate registers
+
+The number of registers operand is the number of additional registers to display
+beyond the starting register. This number is automatically trimmed to limit the 
+display to registers currently allocated to the program. If no such registers 
+are within the requested range, then an error message will be displayed.
+
+Note that before a program has been loaded, the cfm is zero, therefore neither
+the i or o register types can be displayed.  After a program is loaded, it has
+at least four output registers, but still has no input/local registers until it
+acquires some by issuing an "alloc" instruction.
+
+
+10.  Store Binary File
+
+S filename address size
+
+Creates the specified file from a memory image.  The entry point is set to the
+current ip address, and the short data pointer is set to the current value of
+r1, as per section 13 of the IA-64 Software Conventions and Runtime 
+Architecture Guide.
+
+This command is broken, in the sense that it stores the memory image in a format
+which is no longer compatable with the load command. Now that Intel has open 
+sorced its IA-64 assembler, the priority for fixing this is very low.
+
+11. Set Trace Level
+
+T level
+
+Sets the trace level. Currently, this variable is used to control the trace
+message from each of the instruction execution routines which displays the
+instruction which it thinks it is executing, to display a verbose set of 
+messages while loading an ELF relocatable file, and to display information 
+about the internal structure of the symbol table. In general, these messages are
+only valuable for debugging the simulator itself.  Setting the trace level to
+zero (the default) supresses these messages.  Any non-zero value enables them.
+
+12.  Display Memory
+
+X{I,B,S} {base}
+
+Displays a "page" of memory starting at the specified base address. If no
+optional character is present, the default is "I", which attempts to format the 
+data as instruction bundles.
+
+"XB" displays memory as hex bytes, with the printable equivalent shown to the 
+right. Control characters (i.e. values less than an ASCII space character) are 
+show as periods.
+
+"XS" displays the current symbol table.
+
+If the base value is omitted, it defaults to the page following the previous
+display.  Note that when a program is loaded, the default value is set to the
+program's entry point, as specified in the ELF header.
+
+II. Binary Files
+
+The load command currently supports ELF relocatable files, as created by Intel's
+IA-64 assembler.
+
+The save command currently supports only a binary file format consisting of a 
+file header, and a single memory image, which is loaded into memory as a single,
+contiguous module.
+
+1. Header
+
+The header consists of a set of 8-byte link pointers, followed by a set of 
+16-byte function pointers. Currently, only the first two link pointers are 
+defined, and only the first function pointer is used.
+
+a. Link Pointers
+
++0 Offset from start of header to start of load image
++8 Offset from start of header to 1st function pointer
+
+b. Function Pointers
+
+There is one function pointer for each public function in the load image.
+
++0 Offset from start of load image to function entry point.
++8 Offset from start of load image to the reference point for the short data 
+segment.
+
+2. Load Image
+
+A minimal load image consists of one text segment and one short data segment. 
+Other segment types may be present, but currently they will be treated as if 
+they were part of the short data segment.
+
+III. Break Instructions
+
+With the exception of the break.b instruction (which always returns 0) and the 
+break.x instruction (which is not yet implemented), the simulator responds to 
+the value encoded in the instruction as follows:
+
+1. 0x00000 -> 0x1ffff
+
+Architected software interrupt. Prints appropriate error message as defined by 
+Intel, and returns BREAK_INSTR, which halts execution.
+
+2. 0x20000 -> 0x3ffff
+
+Application interrupt. Prints "Application Interrupt", and returns BREAK_INSTR,
+which halts execution.
+
+3. 0x40000 -> 0x7ffff
+
+Debug Breakpoint. Prints "Debug Breakpoint", and returns BREAK_INSTR,
+which halts execution.
+
+4. 0x80000 -> 0xfffff
+
+System calls. If not listed in the following section, prints "Reserved System 
+Call", and returns UNIMPLEMENTED, which halts execution.
+
+IV. Simulated System Calls
+
+The following immediate operands can be used in a break.i, break.m, or break.f 
+instruction to simulate system calls. They are designed to be accessed via a 
+"br.call" type instruction, with the parameters in the caller's output 
+registers.
+
+1. Application Termination 
+
+0x80000 with out0 = return code.
+
+Invokes the simulator to return PGM_TERM, which halts execution.
+
+2. Print to Standard Output
+
+0x80001 with out0 -> format string
+                out1 -> variable list.
+
+Invokes the simulator to issue a vprintf call. Returns IA_OK, which allows 
+execution to continue.
+
+3. Read from Standard Input
+
+0x80002 with out0 -> input buffer address
+                out1 -> input buffer length
+
+Invokes the simulator to issue an fgets call. Returns IA_OK, which allows 
+execution to continue.
+
+V. Sample Programs
+
+Programs with a file name of the form "*.asm" are formatted for use with the 
+internal assembler. Programs with a file name of the form "*.s" are formatted 
+for use with Intel's IA-64 assembler.
+
+1. hello.asm
+
+Demonstrates typical application prologue, and a calling sequence to invoke 
+operating system services.
+
+2. echo.asm
+
+Builds upon hello.asm, to demonstrate string manipulation, as well as the 
+technique of using predicate registers to avoid branches.
+ 

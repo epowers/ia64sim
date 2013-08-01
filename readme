@@ -1,0 +1,84 @@
+IA64 ISA simulator, Alpha release, version 0.1
+Updated to version 0.5 by Chuck Crayne <ccrayne@pacific.net>
+Latest version of ia64sim.zip available at www.pacific.net/~ccrayne/ia64.html
+-----------------------------------------------------------------
+
+License
+-------
+
+This source distribution is placed in the public domain by its author,
+Jason Papadopoulos. You may use it for any purpose, free of charge,
+without having to notify anyone. I disclaim any responsibility for any
+errors, inconsistencies, and inaccuracies with real-world hardware
+implementations of the IA64 instruction set. If you build a mission-
+critical system based only on this simulator and something goes wrong,
+it's your own damned fault.
+
+Optionally, please be nice and tell me if you find this source to be
+useful. Again optionally, if you add to the functionality present here
+please consider making those additions public too, so that others may 
+benefit from your work.	
+					--jasonp@glue.umd.edu
+
+To compile
+----------
+Unix systems: unzip -a -L ia64sim.zip
+              cd ia64sim
+              make -f makefile.unx
+
+DOS-based gcc: pkunzip -d ia64sim.zip
+               cd ia64sim
+               make -f makefile.dj
+
+Windows VC++: never tried it, but change the int64 typedefs
+              in ia64.h and compile all the .c files except
+	      make_isa.c [In version 0.2, define WIN32 to ia64.h]
+	      You'll need a replacement for strtoll() and
+	      strtoul()
+
+To Do
+-----
+Make a working register stack
+Finish off the ISA (I will *not* do it all! Likewise,
+   no one *else* should reinvent the x86 ISA for this simulator,
+   it's just too much work)
+
+Changes in Version 0.2
+-------------------
+1. Implements the "G" command, which runs the code from the current IP
+   until any error or break is encountered. 
+2. Issues a stop to clear the hazards status when the IP is manually changed. 
+3. Adds compile, decode, and execute support for break.i, break.b, break.m, and
+   break.f instructions.
+4. Fixes bug with indirect memory references, such as ld8 r7,[r1],r5. 
+5. Returns error code (instead of just message) in pop_stack_frame if stack is
+   empty.
+6. Fixes a compile problem in b_unit.c:92 assigning int64 to structure.
+7. Returns error message instead of aborting when can't open file
+   specified in "C" command.
+8. Supports M$ int64 types by defining WIN32
+
+Changes in Version 0.3
+----------------------
+1. All commands shown in help screen are now implemented.
+2. "C" and "L" commands now set the program startup environment as per 
+    the Intel "Software Conventions and Runtime Architecure Guide".
+3. The disassembly output for the "alloc" instruction has been changed from 
+   "alloc r=ar.pfs, i, l, o, r" to "alloc r=ar.pfs, {i+l}, o, r" to reflect the 
+   actual machine encoding. Previous versions attempted to guess the split
+   between "input" and "local" registers, often resulting in impossible
+   values, such as "7, -2, 2, 0".
+ 
+Changes in Version 0.4
+----------------------
+1. First draft of a user manual (doc/ia64user.txt)
+2. Systems calls to vprintf and program exit
+3. Enhancements to single step and display register commands
+4. Trace level command
+5. Reset hazards command
+6  Various bug fixes
+
+Changes in Version 0.5
+----------------------
+Supports ELF files created by the Intel IA64 Assembler. Not all relocation
+types are yet supported.
